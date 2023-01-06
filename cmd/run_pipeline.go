@@ -3,6 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+
 	"github.com/loft-sh/devspace/cmd/flags"
 	"github.com/loft-sh/devspace/pkg/devspace/build"
 	"github.com/loft-sh/devspace/pkg/devspace/config/loader"
@@ -12,7 +16,6 @@ import (
 	"github.com/loft-sh/devspace/pkg/devspace/dependency"
 	"github.com/loft-sh/devspace/pkg/devspace/dependency/registry"
 	"github.com/loft-sh/devspace/pkg/devspace/deploy"
-	"github.com/loft-sh/devspace/pkg/devspace/dev"
 	"github.com/loft-sh/devspace/pkg/devspace/devpod"
 	"github.com/loft-sh/devspace/pkg/devspace/hook"
 	"github.com/loft-sh/devspace/pkg/devspace/kill"
@@ -30,9 +33,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
-	"io"
-	"io/ioutil"
-	"os"
 )
 
 // RunPipelineCmd holds the command flags
@@ -44,6 +44,7 @@ type RunPipelineCmd struct {
 	Pipeline                string
 	SkipPush                bool
 	SkipPushLocalKubernetes bool
+	PushOnWorker            bool
 
 	Dependency     []string
 	SkipDependency []string
@@ -83,6 +84,7 @@ func (cmd *RunPipelineCmd) AddPipelineFlags(f factory.Factory, command *cobra.Co
 
 	command.Flags().StringSliceVarP(&cmd.Tags, "tag", "t", cmd.Tags, "Use the given tag for all built images")
 	command.Flags().BoolVar(&cmd.SkipPush, "skip-push", cmd.SkipPush, "Skips image pushing, useful for minikube deployment")
+	command.Flags().BoolVar(&cmd.PushOnWorker, "PushOnWorker", cmd.PushOnWorker, "Skips image pushing, useful for minikube deployment")
 	command.Flags().BoolVar(&cmd.SkipPushLocalKubernetes, "skip-push-local-kube", cmd.SkipPushLocalKubernetes, "Skips image pushing, if a local kubernetes environment is detected")
 
 	command.Flags().BoolVar(&cmd.ShowUI, "show-ui", cmd.ShowUI, "Shows the ui server")
@@ -396,9 +398,10 @@ func (cmd *RunPipelineCmd) BuildOptions(configOptions *loader.ConfigOptions) *Co
 		GlobalFlags: *cmd.GlobalFlags,
 		Options: types.Options{
 			BuildOptions: build.Options{
-				Tags:                      cmd.Tags,
-				SkipBuild:                 cmd.SkipBuild,
-				SkipPush:                  cmd.SkipPush,
+				Tags:      cmd.Tags,
+				SkipBuild: cmd.SkipBuild,
+				SkipPush:  cmd.SkipPush,
+
 				SkipPushOnLocalKubernetes: cmd.SkipPushLocalKubernetes,
 				ForceRebuild:              cmd.ForceBuild,
 				Sequential:                cmd.BuildSequential,
@@ -473,11 +476,11 @@ func runPipeline(ctx devspacecontext.Context, args []string, options *CommandOpt
 	})
 
 	// start ui & open
-	serv, err := dev.UI(ctx, options.UIPort, options.ShowUI, pipe)
-	if err != nil {
-		return err
-	}
-	dependencyRegistry.SetServer("http://" + serv.Server.Addr)
+	// serv, err := dev.UI(ctx, options.UIPort, options.ShowUI, pipe)
+	// if err != nil {
+	// 	return err
+	// }
+	// dependencyRegistry.SetServer("http://" + serv.Server.Addr)
 
 	// get a stdout writer
 	stdoutWriter := ctx.Log().Writer(ctx.Log().GetLevel(), true)

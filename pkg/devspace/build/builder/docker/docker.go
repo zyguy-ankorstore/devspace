@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	devspacecontext "github.com/loft-sh/devspace/pkg/devspace/context"
-	"github.com/loft-sh/devspace/pkg/devspace/kubectl"
-	command2 "github.com/loft-sh/loft-util/pkg/command"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	devspacecontext "github.com/loft-sh/devspace/pkg/devspace/context"
+	"github.com/loft-sh/devspace/pkg/devspace/kubectl"
+	command2 "github.com/loft-sh/loft-util/pkg/command"
+	"github.com/sirupsen/logrus"
 
 	"github.com/docker/cli/cli/streams"
 	"github.com/loft-sh/devspace/pkg/devspace/build/builder/restart"
@@ -52,15 +53,17 @@ type Builder struct {
 	client                    dockerclient.Client
 	skipPush                  bool
 	skipPushOnLocalKubernetes bool
+	pushOnWorker              bool
 }
 
 // NewBuilder creates a new docker Builder instance
-func NewBuilder(ctx devspacecontext.Context, client dockerclient.Client, imageConfigName string, imageConf *latest.Image, imageTags []string, skipPush, skipPushOnLocalKubernetes bool) (*Builder, error) {
+func NewBuilder(ctx devspacecontext.Context, client dockerclient.Client, imageConfigName string, imageConf *latest.Image, imageTags []string, skipPush, skipPushOnLocalKubernetes bool, pushOnWorker bool) (*Builder, error) {
 	return &Builder{
 		helper:                    helper.NewBuildHelper(ctx, EngineName, imageConfigName, imageConf, imageTags),
 		client:                    client,
 		skipPush:                  skipPush,
 		skipPushOnLocalKubernetes: skipPushOnLocalKubernetes,
+		pushOnWorker:              pushOnWorker,
 	}, nil
 }
 
@@ -189,6 +192,9 @@ func (b *Builder) BuildImage(ctx devspacecontext.Context, contextPath, dockerfil
 				command := []string{"kind", "load", "docker-image", "--name", kubectl.GetKindContext(ctx.KubeClient().CurrentContext()), tag}
 				completeArgs := []string{}
 				completeArgs = append(completeArgs, command[1:]...)
+				if b.pushOnWorker {
+					completeArgs = append(completeArgs, "--nodes ", kubectl.GetKindContext(ctx.KubeClient().CurrentContext())+"-worker")
+				}
 				// Determine output writer
 				var writeCloser io.WriteCloser
 				if ctx.Log() == logpkg.GetInstance() {

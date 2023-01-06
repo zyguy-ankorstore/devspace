@@ -75,7 +75,7 @@ func (c *controller) createBuilder(ctx devspacecontext.Context, imageConfigName 
 			return c.createBuilder(ctx, imageConfigName, convertDockerConfigToKanikoConfig(imageConf), imageTags, options)
 		}
 
-		bldr, err = docker.NewBuilder(ctx, dockerClient, imageConfigName, imageConf, imageTags, options.SkipPush, options.SkipPushOnLocalKubernetes)
+		bldr, err = docker.NewBuilder(ctx, dockerClient, imageConfigName, imageConf, imageTags, options.SkipPush, options.SkipPushOnLocalKubernetes, options.PushOnWorker)
 		if err != nil {
 			return nil, errors.Errorf("Error creating docker builder: %v", err)
 		}

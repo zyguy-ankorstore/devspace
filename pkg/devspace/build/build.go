@@ -1,11 +1,12 @@
 package build
 
 import (
+	"strings"
+
 	"github.com/loft-sh/devspace/pkg/devspace/build/types"
 	"github.com/loft-sh/devspace/pkg/devspace/config/constants"
 	devspacecontext "github.com/loft-sh/devspace/pkg/devspace/context"
 	"github.com/loft-sh/devspace/pkg/util/stringutil"
-	"strings"
 
 	"github.com/loft-sh/devspace/pkg/devspace/config/versions/latest"
 	"github.com/loft-sh/devspace/pkg/devspace/hook"
@@ -29,8 +30,8 @@ type Options struct {
 	SkipPushOnLocalKubernetes bool     `long:"skip-push-on-local-kubernetes" description:"Skip pushing"`
 	ForceRebuild              bool     `long:"force-rebuild" description:"Skip pushing"`
 	Sequential                bool     `long:"sequential" description:"Skip pushing"`
-
-	MaxConcurrentBuilds int `long:"max-concurrent" description:"A pointer to an integer"`
+	PushOnWorker              bool
+	MaxConcurrentBuilds       int `long:"max-concurrent" description:"A pointer to an integer"`
 }
 
 // Controller is the main building interface

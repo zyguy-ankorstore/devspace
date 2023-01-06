@@ -11,7 +11,7 @@ import (
 	"github.com/loft-sh/devspace/pkg/devspace/upgrade"
 )
 
-var version = ""
+var version = "6.2.1"
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
